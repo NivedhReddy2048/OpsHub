@@ -9,7 +9,12 @@
  */
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+let BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://opshub-backend.onrender.com/api/v1";
+if (BASE_URL && !BASE_URL.includes("/api/v1")) {
+  BASE_URL = `${BASE_URL.replace(/\/$/, "")}/api/v1`;
+}
+
+console.log("[Axios Init] Configured BASE_URL:", BASE_URL);
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -23,7 +28,7 @@ export const api = axios.create({
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("access");
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -44,7 +49,11 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isLoginOrRefreshRequest =
+      originalRequest.url &&
+      (originalRequest.url.includes("auth/token") || originalRequest.url.includes("token/refresh"));
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isLoginOrRefreshRequest) {
       if (isRefreshing) {
         // Queue request until token refresh completes
         return new Promise((resolve) => {
@@ -61,15 +70,22 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem("refresh_token");
-        if (!refreshToken) throw new Error("No refresh token");
+        const refreshToken = localStorage.getItem("refresh");
+        if (!refreshToken) throw new Error("No refresh token in localStorage");
 
-        const { data } = await axios.post<{ data: { access: string } }>(`${BASE_URL}/auth/token/refresh/`, {
+        console.log("[Axios Interceptor] Token expired. Attempting silent refresh...");
+        const { data } = await axios.post<any>(`${BASE_URL}/auth/token/refresh/`, {
           refresh: refreshToken,
         });
 
-        const newAccessToken: string = data.data.access;
-        localStorage.setItem("access_token", newAccessToken);
+        // Backend response format might be response.data.data.access or response.data.access
+        const newAccessToken: string = data?.data?.access || data?.access;
+        if (!newAccessToken) {
+          throw new Error("No access token found in token refresh response payload");
+        }
+
+        localStorage.setItem("access", newAccessToken);
+        console.log("[Axios Interceptor] Silent refresh succeeded. Resuming queued requests...");
 
         // Drain the queue
         refreshQueue.forEach((cb) => cb(newAccessToken));
@@ -79,10 +95,11 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
         return api(originalRequest);
-      } catch {
+      } catch (refreshErr) {
+        console.error("[Axios Interceptor] Silent refresh failed, clearing tokens:", refreshErr);
         // Refresh failed — clear session and redirect to login
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }

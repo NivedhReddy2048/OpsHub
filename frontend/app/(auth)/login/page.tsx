@@ -35,16 +35,20 @@ export default function LoginPage() {
       await login({ email: email.trim().toLowerCase(), password });
       // Redirect handled inside AuthContext.login()
     } catch (err) {
+      console.error("[LoginPage.handleSubmit] Login caught error:", err);
       const axiosErr = err as AxiosError<{
         message?: string;
         detail?: string;
         non_field_errors?: string[];
       }>;
+      
       const detail =
         axiosErr.response?.data?.message ||
         axiosErr.response?.data?.detail ||
         axiosErr.response?.data?.non_field_errors?.[0] ||
+        (err as Error).message ||
         "Invalid email or password. Please try again.";
+        
       setError(detail);
     } finally {
       setIsSubmitting(false);

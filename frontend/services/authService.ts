@@ -13,8 +13,53 @@ export const authService = {
    * POST /api/v1/auth/token/
    */
   async login(credentials: LoginCredentials): Promise<AuthTokens> {
-    const response = await api.post<ApiResponse<AuthTokens>>("/auth/token/", credentials);
-    return response.data.data;
+    console.log("[authService.login] Request payload:", {
+      email: credentials.email,
+      password: credentials.password ? "[HIDDEN]" : "undefined"
+    });
+    
+    try {
+      const response = await api.post<any>("/auth/token/", credentials);
+      console.log("[authService.login] API response:", response);
+
+      const responseData = response.data;
+      if (!responseData) {
+        throw new Error("Empty response received from authentication service.");
+      }
+
+      // 4. Ensure login success condition is correct
+      // Should validate: response.data.success === true OR response.data.data.access exists
+      const isSuccess = responseData.success === true || !!(responseData.data && responseData.data.access);
+      if (!isSuccess) {
+        throw new Error(responseData.message || "Login failed according to server response.");
+      }
+
+      // 2. Verify frontend correctly parses backend response
+      // Current backend response structure:
+      // response.data.data.access
+      // response.data.data.refresh
+      // Let's handle various structures just in case (e.g. response.data.data or response.data)
+      const dataObj = responseData.data || responseData;
+      const access = dataObj.access || dataObj.accessToken || responseData.access || responseData.token;
+      const refresh = dataObj.refresh || dataObj.refreshToken || responseData.refresh;
+
+      console.log("[authService.login] Parsed tokens:", {
+        access: access ? `${access.substring(0, 10)}...` : "missing",
+        refresh: refresh ? `${refresh.substring(0, 10)}...` : "missing"
+      });
+
+      if (!access || !refresh) {
+        throw new Error("Failed to parse valid access or refresh tokens from backend response.");
+      }
+
+      return {
+        access,
+        refresh,
+      };
+    } catch (err) {
+      console.error("[authService.login] Error occurred during API call:", err);
+      throw err;
+    }
   },
 
   /**

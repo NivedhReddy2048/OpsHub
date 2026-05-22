@@ -49,15 +49,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Called on mount and after login.
    */
   const refreshUser = useCallback(async () => {
+    console.log("[AuthContext.refreshUser] Refreshing user details...");
     try {
       const me = await authService.getMe();
+      console.log("[AuthContext.refreshUser] Fetch user succeeded:", me);
       setUser(me);
-    } catch {
+    } catch (err) {
+      console.error("[AuthContext.refreshUser] Failed to fetch user profile, clearing local auth storage:", err);
       // Token invalid or expired — clear storage silently.
       // The Axios 401 interceptor handles token refresh; if it still fails, tokens are cleared.
       setUser(null);
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
     }
   }, []);
 
@@ -65,12 +68,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Bootstrap: hydrate auth state from localStorage on first render.
    */
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("access");
+    console.log("[AuthContext.useEffect] Hydrating token from localStorage 'access':", token ? `${token.substring(0, 10)}...` : "null");
     if (!token) {
       setIsLoading(false);
       return;
     }
-    refreshUser().finally(() => setIsLoading(false));
+    refreshUser().finally(() => {
+      console.log("[AuthContext.useEffect] Hydration finished.");
+      setIsLoading(false);
+    });
   }, [refreshUser]);
 
   /**
@@ -79,11 +86,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const login = useCallback(
     async (credentials: LoginCredentials) => {
-      const tokens: AuthTokens = await authService.login(credentials);
-      localStorage.setItem("access_token", tokens.access);
-      localStorage.setItem("refresh_token", tokens.refresh);
-      await refreshUser();
-      router.push("/dashboard");
+      console.log("[AuthContext.login] Starting login flow for email:", credentials.email);
+      try {
+        const tokens: AuthTokens = await authService.login(credentials);
+        console.log("[AuthContext.login] Tokens successfully obtained:", {
+          access: tokens.access ? `${tokens.access.substring(0, 10)}...` : "null",
+          refresh: tokens.refresh ? `${tokens.refresh.substring(0, 10)}...` : "null"
+        });
+
+        // 3. Store JWT tokens correctly using keys 'access' and 'refresh'
+        localStorage.setItem("access", tokens.access);
+        localStorage.setItem("refresh", tokens.refresh);
+        console.log("[AuthContext.login] Tokens saved in localStorage.");
+
+        await refreshUser();
+        console.log("[AuthContext.login] User profile hydrated. Executing redirect to /dashboard...");
+        
+        // 5. Fix frontend redirect after successful login
+        router.push("/dashboard");
+        console.log("[AuthContext.login] Redirect to /dashboard invoked.");
+      } catch (err) {
+        console.error("[AuthContext.login] Login failed in context provider:", err);
+        throw err;
+      }
     },
     [refreshUser, router]
   );
@@ -93,17 +118,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * Fails gracefully — always clears local state even if API call fails.
    */
   const logout = useCallback(async () => {
-    const refreshToken = localStorage.getItem("refresh_token");
+    const refreshToken = localStorage.getItem("refresh");
+    console.log("[AuthContext.logout] Logging out. Refresh token:", refreshToken ? `${refreshToken.substring(0, 10)}...` : "null");
     try {
       if (refreshToken) {
         await authService.logout(refreshToken);
+        console.log("[AuthContext.logout] Logout request sent to backend successfully.");
       }
-    } catch {
+    } catch (err) {
+      console.error("[AuthContext.logout] Logout API call failed (clearing local state anyway):", err);
       // Logout API failure is non-fatal — still clear local session.
     } finally {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("access");
+      localStorage.removeItem("refresh");
       setUser(null);
+      console.log("[AuthContext.logout] Local auth storage cleared. Redirecting to /login.");
       router.push("/login");
     }
   }, [router]);
