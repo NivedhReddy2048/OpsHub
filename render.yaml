@@ -2,7 +2,8 @@ services:
   - type: web
     name: opshub-backend
     env: python
-    buildCommand: pip install -r requirements.txt && pip install gunicorn psycopg2-binary && python manage.py collectstatic --noinput
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
     startCommand: gunicorn config.wsgi:application
     envVars:
       - key: DJANGO_SETTINGS_MODULE
