@@ -1,6 +1,8 @@
 # OpsHub
 
-OpsHub is an enterprise operations workflow platform combining helpdesk ticket management, internal task tracking, SLA monitoring, and organization-aware analytics.
+### OpsHub is an enterprise operations workflow platform combining helpdesk ticket management, internal task tracking, SLA monitoring, and organization-aware analytics.
+
+## 🔴 **Live Demo:** [Click here to test the app](https://ops-hub-livid.vercel.app/login)
 
 ## Features
 - **Multi-tenant Organization Architecture**: Data is securely partitioned per organization.
