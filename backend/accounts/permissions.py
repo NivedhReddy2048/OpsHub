@@ -6,8 +6,11 @@ All classes assume the user is already authenticated (IsAuthenticated is a prere
 Use these in combination:
     permission_classes = [IsAuthenticated, IsAdmin]
 """
+import logging
 from rest_framework.permissions import BasePermission
 from core.constants import UserRole
+
+logger = logging.getLogger(__name__)
 
 
 class IsAdmin(BasePermission):
@@ -15,11 +18,18 @@ class IsAdmin(BasePermission):
     message = "Only administrators can perform this action."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == UserRole.ADMIN
+        user = request.user
+        authenticated = bool(user and user.is_authenticated)
+        role = getattr(user, "role", None)
+        result = bool(authenticated and role == UserRole.ADMIN)
+        logger.info(
+            "[AUTH_DEBUG] IsAdmin evaluated - User ID: %s, Role: %s, Org ID: %s, Result: %s",
+            getattr(user, "id", None),
+            role,
+            getattr(user, "organization_id", None),
+            result
         )
+        return result
 
 
 class IsSupportAgent(BasePermission):
@@ -27,11 +37,18 @@ class IsSupportAgent(BasePermission):
     message = "Only support agents can perform this action."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == UserRole.SUPPORT_AGENT
+        user = request.user
+        authenticated = bool(user and user.is_authenticated)
+        role = getattr(user, "role", None)
+        result = bool(authenticated and role == UserRole.SUPPORT_AGENT)
+        logger.info(
+            "[AUTH_DEBUG] IsSupportAgent evaluated - User ID: %s, Role: %s, Org ID: %s, Result: %s",
+            getattr(user, "id", None),
+            role,
+            getattr(user, "organization_id", None),
+            result
         )
+        return result
 
 
 class IsTeamMember(BasePermission):
@@ -39,11 +56,18 @@ class IsTeamMember(BasePermission):
     message = "Only team members can perform this action."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == UserRole.TEAM_MEMBER
+        user = request.user
+        authenticated = bool(user and user.is_authenticated)
+        role = getattr(user, "role", None)
+        result = bool(authenticated and role == UserRole.TEAM_MEMBER)
+        logger.info(
+            "[AUTH_DEBUG] IsTeamMember evaluated - User ID: %s, Role: %s, Org ID: %s, Result: %s",
+            getattr(user, "id", None),
+            role,
+            getattr(user, "organization_id", None),
+            result
         )
+        return result
 
 
 class IsAdminOrSupportAgent(BasePermission):
@@ -51,11 +75,18 @@ class IsAdminOrSupportAgent(BasePermission):
     message = "Only admins or support agents can perform this action."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role in (UserRole.ADMIN, UserRole.SUPPORT_AGENT)
+        user = request.user
+        authenticated = bool(user and user.is_authenticated)
+        role = getattr(user, "role", None)
+        result = bool(authenticated and role in (UserRole.ADMIN, UserRole.SUPPORT_AGENT))
+        logger.info(
+            "[AUTH_DEBUG] IsAdminOrSupportAgent evaluated - User ID: %s, Role: %s, Org ID: %s, Result: %s",
+            getattr(user, "id", None),
+            role,
+            getattr(user, "organization_id", None),
+            result
         )
+        return result
 
 
 class IsOrganizationMember(BasePermission):
@@ -66,11 +97,18 @@ class IsOrganizationMember(BasePermission):
     message = "You must belong to an organization to access this resource."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.organization_id is not None
+        user = request.user
+        authenticated = bool(user and user.is_authenticated)
+        org_id = getattr(user, "organization_id", None)
+        result = bool(authenticated and org_id is not None)
+        logger.info(
+            "[AUTH_DEBUG] IsOrganizationMember evaluated - User ID: %s, Role: %s, Org ID: %s, Result: %s",
+            getattr(user, "id", None),
+            getattr(user, "role", None),
+            org_id,
+            result
         )
+        return result
 
 
 class IsSameOrganization(BasePermission):
@@ -81,8 +119,16 @@ class IsSameOrganization(BasePermission):
     message = "You do not have permission to access resources from another organization."
 
     def has_object_permission(self, request, view, obj):
-        return (
-            request.user.is_authenticated
-            and hasattr(obj, "organization_id")
-            and obj.organization_id == request.user.organization_id
+        user = request.user
+        authenticated = bool(user and user.is_authenticated)
+        obj_org_id = getattr(obj, "organization_id", None)
+        user_org_id = getattr(user, "organization_id", None)
+        result = bool(authenticated and obj_org_id == user_org_id)
+        logger.info(
+            "[AUTH_DEBUG] IsSameOrganization evaluated - User ID: %s, User Org: %s, Object Org: %s, Result: %s",
+            getattr(user, "id", None),
+            user_org_id,
+            obj_org_id,
+            result
         )
+        return result
