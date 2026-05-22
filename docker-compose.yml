@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: opshub_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: opshub_prod
+      POSTGRES_USER: opshub_admin
+      POSTGRES_PASSWORD: SecureProdPassword123!
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - opshub_secure_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opshub_admin -d opshub_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: opshub_redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - opshub_secure_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opshub_backend
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DATABASE_URL=postgres://opshub_admin:SecureProdPassword123!@database:5432/opshub_prod
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=prod-django-insecure-hardened-key-12345
+      - ALLOWED_HOSTS=api.opshub.enterprise,localhost,127.0.0.1
+      - CORS_ALLOWED_ORIGINS=https://opshub.enterprise,http://localhost:3000
+    ports:
+      - "8000:8000"
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+    networks:
+      - opshub_secure_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/accounts/me/"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: opshub_frontend
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+    networks:
+      - opshub_secure_net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+
+networks:
+  opshub_secure_net:
+    driver: bridge

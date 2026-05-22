@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: opshub-backend
+    env: python
+    buildCommand: pip install -r requirements.txt && pip install gunicorn psycopg2-binary && python manage.py collectstatic --noinput
+    startCommand: gunicorn config.wsgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: opshub-db
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: opshub-backend.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://opshub-frontend.vercel.app
+      - key: SECRET_KEY
+        generateValue: true
+
+databases:
+  - name: opshub-db
+    databaseName: opshub
+    user: opshub_user
