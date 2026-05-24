@@ -1,8 +1,8 @@
 # 🚀 OpsHub — Enterprise Operations Platform
 
-An enterprise-grade full-stack operations management platform built for organizations to manage tickets, tasks, projects, teams, analytics, notifications, and operational workflows from a centralized dashboard.
+### An enterprise-grade full-stack operations management platform built for organizations to manage tickets, tasks, projects, teams, analytics, notifications, and operational workflows from a centralized dashboard.
 
-OpsHub combines modern frontend technologies, scalable backend architecture, secure JWT authentication, role-based access control, and production-ready deployment into a complete enterprise ecosystem.
+### OpsHub combines modern frontend technologies, scalable backend architecture, secure JWT authentication, role-based access control, and production-ready deployment into a complete enterprise ecosystem.
 
 ---
 
@@ -392,31 +392,31 @@ python manage.py migrate && gunicorn core.wsgi:application
 
 ## 👥 Team Management
 
-![Team](https://raw.githubusercontent.com/NivedhReddy2048/OpsHub/main/screenshots/team.png)
+![Team](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Team%20management.png?raw=true)
 
 ---
 
 ## 📋 Task Management
 
-![Tasks](https://raw.githubusercontent.com/NivedhReddy2048/OpsHub/main/screenshots/tasks.png)
+![Tasks](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Tasks.png?raw=true)
 
 ---
 
 ## 📁 Project Management
 
-![Projects](https://raw.githubusercontent.com/NivedhReddy2048/OpsHub/main/screenshots/projects.png)
+![Projects](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Project%20management.png?raw=true)
 
 ---
 
 ## 🔔 Notifications
 
-![Notifications](https://raw.githubusercontent.com/NivedhReddy2048/OpsHub/main/screenshots/notifications.png)
+![Notifications](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Notifications.png?raw=true)
 
 ---
 
 ## ⚙️ Settings Panel
 
-![Settings](https://raw.githubusercontent.com/NivedhReddy2048/OpsHub/main/screenshots/settings.png)
+![Settings](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Settings.png?raw=true)
 
 ---
 
