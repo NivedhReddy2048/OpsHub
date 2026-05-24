@@ -374,13 +374,19 @@ python manage.py migrate && gunicorn core.wsgi:application
 
 ## 🔐 Login Page
 
-![Login](https://raw.githubusercontent.com/NivedhReddy2048/OpsHub/main/screenshots/login.png)
+![Login](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Login.png?raw=true)
 
 ---
 
 ## 📊 Dashboard
 
 ![Dashboard](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Dashboard.png?raw=true)
+
+---
+
+## 🎟️ Tickets
+
+![Tickets]()
 
 ---
 
