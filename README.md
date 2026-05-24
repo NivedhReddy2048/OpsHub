@@ -380,7 +380,7 @@ python manage.py migrate && gunicorn core.wsgi:application
 
 ## 📊 Dashboard
 
-![Dashboard](https://raw.githubusercontent.com/NivedhReddy2048/OpsHub/main/screenshots/dashboard.png)
+![Dashboard](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Dashboard.png?raw=true)
 
 ---
 
