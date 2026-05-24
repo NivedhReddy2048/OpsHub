@@ -386,7 +386,7 @@ python manage.py migrate && gunicorn core.wsgi:application
 
 ## 🎟️ Tickets
 
-![Tickets]()
+![Tickets](https://github.com/NivedhReddy2048/OpsHub/blob/main/screenshots/Tickets.png?raw=true)
 
 ---
 
